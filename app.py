@@ -79,7 +79,7 @@ st.markdown("""
     }
 
     .hero-sub {
-        color: #888;
+        color: #555;
         font-size: 1.15rem;
         margin-top: 4px;
     }
@@ -99,7 +99,7 @@ st.markdown("""
         border-radius: 20px;
         padding: 4px 14px;
         font-size: 0.85rem;
-        color: #666;
+        color: #444;
     }
 
     /* ---- Search bar ---- */
@@ -171,6 +171,7 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(0,0,0,0.06);
         font-size: 1.1rem;
         line-height: 1.9;
+        color: #222;
         margin-bottom: 1rem;
         position: relative;
         overflow: hidden;
@@ -270,13 +271,13 @@ st.markdown("""
     }
 
     .source-card .source-domain {
-        color: #999;
+        color: #666;
         font-size: 0.8rem;
         margin-top: 2px;
     }
 
     .source-card .source-desc {
-        color: #555;
+        color: #333;
         font-size: 0.92rem;
         margin-top: 6px;
         line-height: 1.5;
@@ -285,7 +286,7 @@ st.markdown("""
     /* ---- Footer ---- */
     .footer {
         text-align: center;
-        color: #aaa;
+        color: #777;
         font-size: 0.85rem;
         padding: 2rem 0 1rem;
     }
