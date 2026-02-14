@@ -37,11 +37,18 @@ Rules:
 """
 
 
+def _relevance_score(query: str, title: str, content: str) -> int:
+    """Score how relevant an article is to the query based on keyword overlap."""
+    query_words = set(re.findall(r'[a-z]{3,}', query.lower()))
+    text = f"{title} {content}".lower()
+    return sum(1 for w in query_words if w in text)
+
+
 def search_and_summarize(query: str) -> dict:
     """Search whitelisted sites and return a kid-friendly summary with sources."""
 
-    # Step 1: Search whitelisted sites via DuckDuckGo
-    search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=5)
+    # Step 1: Search whitelisted sites via DuckDuckGo (fetch extra candidates)
+    search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=10)
 
     if not search_results:
         return {
@@ -51,36 +58,50 @@ def search_and_summarize(query: str) -> dict:
         }
 
     # Step 2: Fetch and extract content from each result in parallel
-    with ThreadPoolExecutor(max_workers=5) as pool:
+    with ThreadPoolExecutor(max_workers=10) as pool:
         articles = list(pool.map(
             lambda r: extract_article_text(r["url"]), search_results
         ))
 
     # Merge search result info with extracted content
-    sources = []
-    context_parts = []
-    for i, (result, article) in enumerate(zip(search_results, articles), 1):
+    candidates = []
+    for result, article in zip(search_results, articles):
         title = article.get("title") or result["title"]
         url = article.get("resolved_url") or result["url"]
         text = article.get("text", "")
         snippet = result.get("snippet", "")
 
-        # Use article text if available, otherwise fall back to search snippet
         content = text if len(text) > 50 else snippet
-
         if not content:
             continue
 
-        sources.append({
+        score = _relevance_score(query, title, content)
+        candidates.append({
             "title": title,
             "url": result["url"],
             "resolved_url": url,
             "image_url": article.get("image_url", ""),
             "description": "",
+            "content": content,
+            "score": score,
         })
 
+    # Step 3: Keep top 5 most relevant articles
+    candidates.sort(key=lambda c: c["score"], reverse=True)
+    candidates = candidates[:5]
+
+    sources = []
+    context_parts = []
+    for c in candidates:
+        sources.append({
+            "title": c["title"],
+            "url": c["url"],
+            "resolved_url": c["resolved_url"],
+            "image_url": c["image_url"],
+            "description": "",
+        })
         context_parts.append(
-            f"[{len(sources)}] {title} ({url})\n{content}"
+            f"[{len(sources)}] {c['title']} ({c['resolved_url']})\n{c['content']}"
         )
 
     if not sources:
