@@ -69,6 +69,27 @@
       "url": "https://wonderopolis.org",
       "category": "research",
       "description": "Daily inquiry-based learning"
+    },
+    {
+      "name": "Newsela",
+      "domain": "newsela.com",
+      "url": "https://newsela.com",
+      "category": "news",
+      "description": "Current events at adjustable reading levels"
+    },
+    {
+      "name": "Youngzine",
+      "domain": "youngzine.org",
+      "url": "https://youngzine.org",
+      "category": "news",
+      "description": "News and current events for kids"
+    },
+    {
+      "name": "Science News Explores",
+      "domain": "snexplores.org",
+      "url": "https://www.snexplores.org",
+      "category": "news",
+      "description": "Science news written for students"
     }
   ]
 }

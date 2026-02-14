@@ -392,7 +392,8 @@ st.markdown("""
         <span class="hero-badge">Wonderopolis</span>
         <span class="hero-badge">TIME for Kids</span>
         <span class="hero-badge">Ducksters</span>
-        <span class="hero-badge">+ 6 more</span>
+        <span class="hero-badge">Newsela</span>
+        <span class="hero-badge">+ 8 more</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
