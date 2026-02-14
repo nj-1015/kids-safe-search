@@ -109,8 +109,13 @@ st.markdown("""
         border-radius: 50px !important;
         border: 3px solid #C5DAEF !important;
         background: white !important;
+        color: #222 !important;
         box-shadow: 0 4px 15px rgba(74, 144, 217, 0.1) !important;
         transition: all 0.3s ease !important;
+    }
+
+    .stTextInput > div > div > input::placeholder {
+        color: #888 !important;
     }
 
     .stTextInput > div > div > input:focus {
