@@ -31,8 +31,8 @@ Rules:
 - Be encouraging and enthusiastic
 - Answer ONLY based on the provided sources below — do NOT make up information
 - Cite your sources using [1], [2], etc. at the end of each sentence that uses information from that source
-- You MUST cite EVERY source at least once. Pull at least one fact or detail from each source provided
-- Spread citations across all sources to give a well-rounded answer
+- ONLY use sources that are directly relevant to the question. SKIP any source that is off-topic or only loosely related
+- Stay focused on exactly what the user asked. Do NOT go on tangents about related but different topics
 - If the sources don't have enough information to answer the question, say so honestly\
 """
 
