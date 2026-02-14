@@ -320,15 +320,21 @@ st.markdown("""
 
 
 def format_summary_with_citation_links(summary: str, sources: list[dict]) -> str:
-    """Convert [1] [2] citations into clickable links."""
-    def replace_cite(match):
-        num = int(match.group(1))
+    """Convert [1], [2], and [1, 2, 3] citations into clickable badge links."""
+
+    def _make_badge(num: int) -> str:
         if 1 <= num <= len(sources):
             url = sources[num - 1].get("resolved_url") or sources[num - 1]["url"]
             return f'<a class="cite" href="{url}" target="_blank">{num}</a>'
-        return match.group(0)
+        return f"[{num}]"
 
-    return re.sub(r'\[(\d+)\]', replace_cite, summary)
+    def replace_cite_group(match):
+        inner = match.group(1)
+        nums = re.findall(r'\d+', inner)
+        return " ".join(_make_badge(int(n)) for n in nums)
+
+    # Match [1], [1, 2], [1, 3, 5], etc.
+    return re.sub(r'\[([\d,\s]+)\]', replace_cite_group, summary)
 
 
 def build_summary_html(summary: str, sources: list[dict]) -> str:
