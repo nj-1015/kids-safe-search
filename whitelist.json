@@ -1,0 +1,74 @@
+{
+  "sites": [
+    {
+      "name": "Kiddle",
+      "domain": "kiddle.co",
+      "url": "https://www.kiddle.co",
+      "category": "search",
+      "description": "Google Safe Search powered, editor-curated results"
+    },
+    {
+      "name": "KidzSearch",
+      "domain": "kidzsearch.com",
+      "url": "https://www.kidzsearch.com",
+      "category": "search",
+      "description": "Strict filtering, 200K+ kid-friendly wiki articles"
+    },
+    {
+      "name": "SweetSearch",
+      "domain": "sweetsearch.com",
+      "url": "https://www.sweetsearch.com",
+      "category": "search",
+      "description": "Index vetted by librarians and teachers"
+    },
+    {
+      "name": "TIME for Kids",
+      "domain": "timeforkids.com",
+      "url": "https://www.timeforkids.com",
+      "category": "news",
+      "description": "Grade-level news stories"
+    },
+    {
+      "name": "DOGOnews",
+      "domain": "dogonews.com",
+      "url": "https://www.dogonews.com",
+      "category": "news",
+      "description": "Kids' news with vocabulary building"
+    },
+    {
+      "name": "Smithsonian TweenTribune",
+      "domain": "tweentribune.com",
+      "url": "https://www.tweentribune.com",
+      "category": "news",
+      "description": "Adjustable Lexile reading levels"
+    },
+    {
+      "name": "Ducksters",
+      "domain": "ducksters.com",
+      "url": "https://www.ducksters.com",
+      "category": "research",
+      "description": "Bite-sized history, geography, science"
+    },
+    {
+      "name": "National Geographic Kids",
+      "domain": "kids.nationalgeographic.com",
+      "url": "https://kids.nationalgeographic.com",
+      "category": "research",
+      "description": "Visual science and nature content"
+    },
+    {
+      "name": "Britannica School",
+      "domain": "school.britannica.com",
+      "url": "https://school.britannica.com",
+      "category": "research",
+      "description": "Toggle Elementary/Middle levels"
+    },
+    {
+      "name": "Wonderopolis",
+      "domain": "wonderopolis.org",
+      "url": "https://wonderopolis.org",
+      "category": "research",
+      "description": "Daily inquiry-based learning"
+    }
+  ]
+}
