@@ -7,7 +7,14 @@ from config import GEMINI_API_KEY, load_whitelist
 from services.content_extractor import extract_article_text
 from services.web_searcher import search_whitelisted
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=GEMINI_API_KEY)
+    return _client
 
 MODEL_NAME = "gemini-2.5-pro"
 
@@ -93,7 +100,7 @@ Sources:
 
 Using ONLY the sources above, write a kid-friendly answer. Cite sources with [1], [2], etc."""
 
-    response = client.models.generate_content(
+    response = _get_client().models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
         config=genai.types.GenerateContentConfig(
@@ -151,7 +158,7 @@ Sources:
 {source_list}"""
 
     try:
-        resp = client.models.generate_content(
+        resp = _get_client().models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
             config=genai.types.GenerateContentConfig(
