@@ -161,7 +161,14 @@ Using ONLY the sources above, write a kid-friendly answer. Cite sources with [1]
 
     summary = response.text or ""
 
-    # Step 4: Keep only sources actually cited in the answer, renumber
+    # Step 4: Normalize citations — convert [1, 3, 5] to [1] [3] [5]
+    def _expand_citations(m):
+        nums = re.findall(r'\d+', m.group(1))
+        return " ".join(f"[{n}]" for n in nums)
+
+    summary = re.sub(r'\[([\d,\s]+)\]', _expand_citations, summary)
+
+    # Step 5: Keep only sources actually cited in the answer, renumber
     cited_nums = set(int(n) for n in re.findall(r'\[(\d+)\]', summary))
     if cited_nums:
         cited_sources = [s for i, s in enumerate(sources, 1) if i in cited_nums]
