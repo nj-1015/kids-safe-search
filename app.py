@@ -11,6 +11,29 @@ st.set_page_config(
     layout="centered",
 )
 
+# --- Password gate ---
+APP_PASSWORD = st.secrets.get("APP_PASSWORD", "")
+
+if APP_PASSWORD:
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        st.markdown(
+            "<h1 style='text-align:center; font-size:3rem;'>🔒</h1>"
+            "<h2 style='text-align:center; color:#4A90D9;'>Enter the secret password</h2>",
+            unsafe_allow_html=True,
+        )
+        pwd = st.text_input("Password", type="password", label_visibility="collapsed",
+                            placeholder="Type the secret password...")
+        if st.button("Enter"):
+            if pwd == APP_PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("That's not the right password! Ask your parent.")
+        st.stop()
+
 # --- CSS ---
 st.markdown("""
 <style>
