@@ -296,6 +296,16 @@ st.markdown("""
         padding: 2rem 0 1rem;
     }
 
+    /* ---- Spinner / alerts ---- */
+    .stSpinner > div > span {
+        color: #333 !important;
+        font-size: 1.1rem !important;
+    }
+
+    .stAlert p, .stAlert span {
+        color: #333 !important;
+    }
+
     .footer .shield {
         display: inline-block;
         background: #E8F5E9;
