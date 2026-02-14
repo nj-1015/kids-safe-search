@@ -48,7 +48,7 @@ def search_and_summarize(query: str) -> dict:
     """Search whitelisted sites and return a kid-friendly summary with sources."""
 
     # Step 1: Search whitelisted sites via DuckDuckGo (fetch extra candidates)
-    search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=10)
+    search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=20)
 
     if not search_results:
         return {
