@@ -1,3 +1,4 @@
+import os
 import re
 
 import streamlit as st
@@ -11,8 +12,22 @@ st.set_page_config(
     layout="centered",
 )
 
+# --- PWA support (installable on Chromebook) ---
+st.markdown("""
+<link rel="manifest" href="app/static/manifest.json">
+<meta name="theme-color" content="#4A90D9">
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('app/static/sw.js').catch(() => {});
+}
+</script>
+""", unsafe_allow_html=True)
+
 # --- Password gate ---
-APP_PASSWORD = st.secrets.get("APP_PASSWORD", "")
+try:
+    APP_PASSWORD = st.secrets.get("APP_PASSWORD", "") or os.environ.get("APP_PASSWORD", "")
+except Exception:
+    APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 
 if APP_PASSWORD:
     if "authenticated" not in st.session_state:
