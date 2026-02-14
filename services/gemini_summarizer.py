@@ -5,7 +5,7 @@ from google import genai
 
 from config import GEMINI_API_KEY, load_whitelist
 from services.content_extractor import extract_article_text
-from services.web_searcher import search_whitelisted
+from services.web_searcher import search_per_domain, search_whitelisted
 
 _client = None
 
@@ -44,28 +44,24 @@ def _relevance_score(query: str, title: str, content: str) -> int:
     return sum(1 for w in query_words if w in text)
 
 
-def search_and_summarize(query: str) -> dict:
-    """Search whitelisted sites and return a kid-friendly summary with sources."""
+MIN_GOOD_CANDIDATES = 5
 
-    # Step 1: Search whitelisted sites via DuckDuckGo (fetch extra candidates)
-    search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=20)
 
-    if not search_results:
-        return {
-            "summary": "I couldn't find any information about that on our safe websites. "
-                       "Try asking your question in a different way!",
-            "sources": [],
-        }
+def _fetch_and_score(query: str, search_results: list[dict], seen_urls: set) -> list[dict]:
+    """Fetch article content, score relevance, and return candidates (skipping duplicates)."""
+    # Filter out already-seen URLs
+    new_results = [r for r in search_results if r["url"] not in seen_urls]
+    if not new_results:
+        return []
 
-    # Step 2: Fetch and extract content from each result in parallel
     with ThreadPoolExecutor(max_workers=10) as pool:
         articles = list(pool.map(
-            lambda r: extract_article_text(r["url"]), search_results
+            lambda r: extract_article_text(r["url"]), new_results
         ))
 
-    # Merge search result info with extracted content
     candidates = []
-    for result, article in zip(search_results, articles):
+    for result, article in zip(new_results, articles):
+        seen_urls.add(result["url"])
         title = article.get("title") or result["title"]
         url = article.get("resolved_url") or result["url"]
         text = article.get("text", "")
@@ -85,14 +81,45 @@ def search_and_summarize(query: str) -> dict:
             "content": content,
             "score": score,
         })
+    return candidates
 
-    # Step 3: Keep top 5 most relevant articles
-    candidates.sort(key=lambda c: c["score"], reverse=True)
-    candidates = candidates[:5]
+
+def search_and_summarize(query: str) -> dict:
+    """Search whitelisted sites and return a kid-friendly summary with sources."""
+    seen_urls: set = set()
+
+    # Phase 1: Combined search across all whitelisted domains
+    search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=20)
+    candidates = _fetch_and_score(query, search_results, seen_urls)
+
+    # Keep only relevant candidates (score > 0)
+    good = [c for c in candidates if c["score"] > 0]
+
+    # Phase 2: If not enough, search each domain individually
+    if len(good) < MIN_GOOD_CANDIDATES:
+        per_domain_results = search_per_domain(query, WHITELISTED_DOMAINS, results_per_domain=3)
+        extra = _fetch_and_score(query, per_domain_results, seen_urls)
+        candidates.extend(extra)
+        good = [c for c in candidates if c["score"] > 0]
+
+    if not good:
+        # Fall back to all candidates if none scored well
+        good = candidates
+
+    if not good:
+        return {
+            "summary": "I couldn't find any information about that on our safe websites. "
+                       "Try asking your question in a different way!",
+            "sources": [],
+        }
+
+    # Keep top 5 most relevant articles
+    good.sort(key=lambda c: c["score"], reverse=True)
+    good = good[:5]
 
     sources = []
     context_parts = []
-    for c in candidates:
+    for c in good:
         sources.append({
             "title": c["title"],
             "url": c["url"],
