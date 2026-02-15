@@ -31,8 +31,8 @@ Rules:
 - Be encouraging and enthusiastic
 - Answer ONLY based on the provided sources below — do NOT make up information
 - Cite your sources using [1], [2], etc. at the end of each sentence that uses information from that source
-- Try to use as many sources as possible — aim for at least 3 different sources in your answer
-- Only skip a source if it is COMPLETELY unrelated to the question (e.g., about a totally different topic)
+- You MUST cite EVERY source provided. Each source has useful information — find something relevant from each one and cite it
+- Do NOT skip any source unless it is about a completely different topic with zero relevance
 - Stay focused on exactly what the user asked. Do NOT go on tangents about unrelated topics
 - If the sources don't have enough information to answer the question, say so honestly\
 """
@@ -96,12 +96,11 @@ def search_and_summarize(query: str) -> dict:
     # Keep only relevant candidates (score > 0)
     good = [c for c in candidates if c["score"] > 0]
 
-    # Phase 2: If not enough, search each domain individually
-    if len(good) < MIN_GOOD_CANDIDATES:
-        per_domain_results = search_per_domain(query, WHITELISTED_DOMAINS, results_per_domain=3)
-        extra = _fetch_and_score(query, per_domain_results, seen_urls)
-        candidates.extend(extra)
-        good = [c for c in candidates if c["score"] > 0]
+    # Phase 2: Always search each domain individually for more candidates
+    per_domain_results = search_per_domain(query, WHITELISTED_DOMAINS, results_per_domain=3)
+    extra = _fetch_and_score(query, per_domain_results, seen_urls)
+    candidates.extend(extra)
+    good = [c for c in candidates if c["score"] > 0]
 
     if not good:
         # Fall back to all candidates if none scored well
@@ -154,7 +153,7 @@ Using ONLY the sources above, write a kid-friendly answer. Cite sources with [1]
         contents=prompt,
         config=genai.types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
-            temperature=0.7,
+            temperature=0.3,
             max_output_tokens=16384,
         ),
     )
@@ -168,22 +167,8 @@ Using ONLY the sources above, write a kid-friendly answer. Cite sources with [1]
 
     summary = re.sub(r'\[([\d,\s]+)\]', _expand_citations, summary)
 
-    # Step 5: Keep only sources actually cited in the answer, renumber
-    cited_nums = set(int(n) for n in re.findall(r'\[(\d+)\]', summary))
-    if cited_nums:
-        cited_sources = [s for i, s in enumerate(sources, 1) if i in cited_nums]
-        # Renumber citations in summary to be sequential
-        old_to_new = {}
-        new_idx = 1
-        for old_idx in sorted(cited_nums):
-            old_to_new[old_idx] = new_idx
-            new_idx += 1
-        summary = re.sub(
-            r'\[(\d+)\]',
-            lambda m: f'[{old_to_new[int(m.group(1))]}]' if int(m.group(1)) in old_to_new else m.group(0),
-            summary,
-        )
-        sources = cited_sources
+    # Step 5: Normalize citations (keep all sources — don't filter uncited ones)
+    # Sources are already numbered [1]-[5] matching the context, no renumbering needed
 
     # Step 5: Generate per-source summaries
     _generate_source_summaries(summary, sources)
