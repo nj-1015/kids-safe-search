@@ -90,6 +90,20 @@
       "url": "https://www.snexplores.org",
       "category": "news",
       "description": "Science news written for students"
+    },
+    {
+      "name": "News for Kids",
+      "domain": "newsforkids.net",
+      "url": "https://newsforkids.net",
+      "category": "news",
+      "description": "Daily current events roundups for kids"
+    },
+    {
+      "name": "Teaching Kids News",
+      "domain": "teachingkidsnews.com",
+      "url": "https://teachingkidsnews.com",
+      "category": "news",
+      "description": "Readable, teachable news with reading levels"
     }
   ]
 }
