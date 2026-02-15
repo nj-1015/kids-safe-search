@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 
 import streamlit as st
 
@@ -48,6 +49,12 @@ if APP_PASSWORD:
             else:
                 st.error("That's not the right password! Ask your parent.")
         st.stop()
+
+# --- Session state for search history ---
+if "search_history" not in st.session_state:
+    st.session_state.search_history = []
+if "active_result" not in st.session_state:
+    st.session_state.active_result = None
 
 # --- CSS ---
 st.markdown("""
@@ -315,6 +322,62 @@ st.markdown("""
         font-size: 0.85rem;
         font-weight: 600;
     }
+
+    /* ---- Sidebar ---- */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #E8F4FD 0%, #FFF8E7 100%);
+        font-family: 'Nunito', sans-serif;
+    }
+
+    [data-testid="stSidebar"] .sidebar-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #333;
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    [data-testid="stSidebar"] .history-item {
+        background: white;
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    [data-testid="stSidebar"] .history-item:hover {
+        border-color: #4A90D9;
+        box-shadow: 0 3px 12px rgba(74,144,217,0.15);
+        transform: translateY(-1px);
+    }
+
+    [data-testid="stSidebar"] .history-query {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.92rem;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    [data-testid="stSidebar"] .history-time {
+        font-size: 0.75rem;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    [data-testid="stSidebar"] .history-sources {
+        font-size: 0.75rem;
+        color: #4A90D9;
+        margin-top: 2px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -398,6 +461,34 @@ def render_source_card_html(idx: int, source: dict) -> str:
     """
 
 
+# --- Sidebar: Search History ---
+with st.sidebar:
+    st.markdown('<div class="sidebar-title">&#128336; Search History</div>', unsafe_allow_html=True)
+
+    if not st.session_state.search_history:
+        st.caption("Your searches will appear here.")
+    else:
+        for i, entry in enumerate(reversed(st.session_state.search_history)):
+            idx = len(st.session_state.search_history) - 1 - i
+            num_sources = len(entry.get("sources", []))
+            item_html = f"""
+            <div class="history-item" id="hist-{idx}">
+                <div class="history-query">{entry['query']}</div>
+                <div class="history-time">{entry['timestamp']}</div>
+                <div class="history-sources">{num_sources} source{'s' if num_sources != 1 else ''}</div>
+            </div>
+            """
+            st.markdown(item_html, unsafe_allow_html=True)
+            if st.button(f"View", key=f"hist_{idx}", use_container_width=True):
+                st.session_state.active_result = entry
+                st.rerun()
+
+        st.divider()
+        if st.button("Clear History", use_container_width=True):
+            st.session_state.search_history = []
+            st.session_state.active_result = None
+            st.rerun()
+
 # --- Header ---
 st.markdown("""
 <div class="hero">
@@ -409,7 +500,7 @@ st.markdown("""
         <span class="hero-badge">TIME for Kids</span>
         <span class="hero-badge">Ducksters</span>
         <span class="hero-badge">Newsela</span>
-        <span class="hero-badge">+ 8 more</span>
+        <span class="hero-badge">+ 10 more</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -429,43 +520,56 @@ if search_clicked and query.strip():
     with st.spinner("Searching safe sites for you..."):
         try:
             result = search_and_summarize(query.strip())
-            sources = result["sources"]
-
-            # Answer section
-            st.markdown("""
-            <div class="section-header">
-                <span class="icon">📖</span>
-                <span class="label">Answer</span>
-                <span class="line"></span>
-            </div>
-            """, unsafe_allow_html=True)
-
-            summary_html = build_summary_html(result["summary"], sources)
-            st.markdown(
-                f'<div class="summary-card">{summary_html}</div>',
-                unsafe_allow_html=True,
-            )
-
-            # Source articles
-            if sources:
-                st.markdown("""
-                <div class="section-header">
-                    <span class="icon">📚</span>
-                    <span class="label">Where I Found This</span>
-                    <span class="line"></span>
-                </div>
-                """, unsafe_allow_html=True)
-
-                cards_html = "".join(
-                    render_source_card_html(i, src) for i, src in enumerate(sources, 1)
-                )
-                st.markdown(cards_html, unsafe_allow_html=True)
-
+            entry = {
+                "query": query.strip(),
+                "summary": result["summary"],
+                "sources": result["sources"],
+                "timestamp": datetime.now().strftime("%I:%M %p"),
+            }
+            # Save to history (limit to 20)
+            st.session_state.search_history.append(entry)
+            if len(st.session_state.search_history) > 20:
+                st.session_state.search_history = st.session_state.search_history[-20:]
+            st.session_state.active_result = entry
+            st.rerun()
         except Exception as e:
             st.error(f"Oops! Something went wrong. Please try again! ({e})")
 
 elif search_clicked:
     st.warning("Please type a question first!")
+
+# --- Display active result ---
+if st.session_state.active_result:
+    active = st.session_state.active_result
+    sources = active["sources"]
+
+    st.markdown("""
+    <div class="section-header">
+        <span class="icon">📖</span>
+        <span class="label">Answer</span>
+        <span class="line"></span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    summary_html = build_summary_html(active["summary"], sources)
+    st.markdown(
+        f'<div class="summary-card">{summary_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+    if sources:
+        st.markdown("""
+        <div class="section-header">
+            <span class="icon">📚</span>
+            <span class="label">Where I Found This</span>
+            <span class="line"></span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        cards_html = "".join(
+            render_source_card_html(i, src) for i, src in enumerate(sources, 1)
+        )
+        st.markdown(cards_html, unsafe_allow_html=True)
 
 # --- Footer ---
 st.markdown("""
