@@ -10,7 +10,7 @@ from services.gemini_summarizer import search_and_summarize
 st.set_page_config(
     page_title="KidSearch - Safe Search for Kids",
     page_icon="🔍",
-    layout="centered",
+    layout="wide",
 )
 
 # --- PWA support (installable on Chromebook) ---
@@ -74,6 +74,9 @@ st.markdown("""
     .hero {
         text-align: center;
         padding: 2rem 1rem 1rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .hero-title {
@@ -301,6 +304,9 @@ st.markdown("""
         color: #777;
         font-size: 0.85rem;
         padding: 2rem 0 1rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     /* ---- Spinner / alerts ---- */
@@ -505,15 +511,16 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Search form ---
-query = st.text_input(
-    "Your question",
-    placeholder="e.g., Why is the sky blue? How do volcanoes work?",
-    max_chars=200,
-    label_visibility="collapsed",
-)
-
-search_clicked = st.button("Search!")
+# --- Search form (centered on wide layout) ---
+_, _search_col, _ = st.columns([1, 2, 1])
+with _search_col:
+    query = st.text_input(
+        "Your question",
+        placeholder="e.g., Why is the sky blue? How do volcanoes work?",
+        max_chars=200,
+        label_visibility="collapsed",
+    )
+    search_clicked = st.button("Search!")
 
 # --- Search logic ---
 if search_clicked and query.strip():
@@ -538,38 +545,42 @@ if search_clicked and query.strip():
 elif search_clicked:
     st.warning("Please type a question first!")
 
-# --- Display active result ---
+# --- Display active result (side-by-side on wide screens) ---
 if st.session_state.active_result:
     active = st.session_state.active_result
     sources = active["sources"]
 
-    st.markdown("""
-    <div class="section-header">
-        <span class="icon">📖</span>
-        <span class="label">Answer</span>
-        <span class="line"></span>
-    </div>
-    """, unsafe_allow_html=True)
+    col_answer, col_sources = st.columns([3, 2], gap="large")
 
-    summary_html = build_summary_html(active["summary"], sources)
-    st.markdown(
-        f'<div class="summary-card">{summary_html}</div>',
-        unsafe_allow_html=True,
-    )
-
-    if sources:
+    with col_answer:
         st.markdown("""
         <div class="section-header">
-            <span class="icon">📚</span>
-            <span class="label">Where I Found This</span>
+            <span class="icon">📖</span>
+            <span class="label">Answer</span>
             <span class="line"></span>
         </div>
         """, unsafe_allow_html=True)
 
-        cards_html = "".join(
-            render_source_card_html(i, src) for i, src in enumerate(sources, 1)
+        summary_html = build_summary_html(active["summary"], sources)
+        st.markdown(
+            f'<div class="summary-card">{summary_html}</div>',
+            unsafe_allow_html=True,
         )
-        st.markdown(cards_html, unsafe_allow_html=True)
+
+    with col_sources:
+        if sources:
+            st.markdown("""
+            <div class="section-header">
+                <span class="icon">📚</span>
+                <span class="label">Where I Found This</span>
+                <span class="line"></span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            cards_html = "".join(
+                render_source_card_html(i, src) for i, src in enumerate(sources, 1)
+            )
+            st.markdown(cards_html, unsafe_allow_html=True)
 
 # --- Footer ---
 st.markdown("""
