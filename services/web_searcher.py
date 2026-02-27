@@ -14,8 +14,10 @@ def _is_whitelisted(url: str, domains: list[str]) -> bool:
     """Check if a URL belongs to one of the whitelisted domains (with optional path prefix)."""
     parsed = urlparse(url)
     netloc = parsed.netloc.lower()
+    # Strip www. prefix for matching (but don't allow arbitrary subdomains like games.*)
+    bare = netloc.removeprefix("www.")
     for d in domains:
-        if netloc == d or netloc.endswith("." + d):
+        if bare == d:
             # If this domain has a path_prefix requirement, check the path too
             prefix = _PATH_PREFIXES.get(d)
             if prefix and not parsed.path.lower().startswith(prefix):

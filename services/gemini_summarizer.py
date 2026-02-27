@@ -39,30 +39,8 @@ Rules:
 """
 
 
-def _relevance_score(query: str, title: str, content: str) -> int:
-    """Score how relevant an article is to the query based on keyword overlap."""
-    # Include numbers (e.g. "2025") alongside words for scoring
-    query_words = set(re.findall(r'[a-z0-9]{3,}', query.lower()))
-    text = f"{title} {content}".lower()
-    matched = {w for w in query_words if w in text}
-    score = len(matched)
-
-    # Bonus: if query contains a 4-digit year AND article matches the year
-    # AND at least one non-year keyword also matches (to avoid boosting generic "2025" pages)
-    years = set(re.findall(r'\b(20\d{2})\b', query))
-    non_year_matches = matched - years
-    for year in years:
-        if year in text and non_year_matches:
-            score += 3
-    return score
-
-
-MIN_GOOD_CANDIDATES = 5
-
-
-def _fetch_and_score(query: str, search_results: list[dict], seen_urls: set) -> list[dict]:
-    """Fetch article content, score relevance, and return candidates (skipping duplicates)."""
-    # Filter out already-seen URLs
+def _fetch_candidates(search_results: list[dict], seen_urls: set) -> list[dict]:
+    """Fetch article content and return candidates (skipping duplicates)."""
     new_results = [r for r in search_results if r["url"] not in seen_urls]
     if not new_results:
         return []
@@ -84,7 +62,6 @@ def _fetch_and_score(query: str, search_results: list[dict], seen_urls: set) -> 
         if not content:
             continue
 
-        score = _relevance_score(query, title, content)
         candidates.append({
             "title": title,
             "url": result["url"],
@@ -92,9 +69,64 @@ def _fetch_and_score(query: str, search_results: list[dict], seen_urls: set) -> 
             "image_url": article.get("image_url", ""),
             "description": "",
             "content": content,
-            "score": score,
         })
     return candidates
+
+
+def _rank_by_relevance(query: str, candidates: list[dict], top_n: int = 5) -> list[dict]:
+    """Use Gemini to pick the most relevant articles for the query."""
+    if len(candidates) <= top_n:
+        return candidates
+
+    article_list = []
+    for i, c in enumerate(candidates):
+        preview = c["content"][:300].replace("\n", " ")
+        article_list.append(f"[{i+1}] {c['title']}\n{preview}")
+    articles_text = "\n\n".join(article_list)
+
+    prompt = f"""\
+User's question: "{query}"
+
+Below are {len(candidates)} articles. Pick the {top_n} MOST relevant to the user's question.
+Consider: Does the article actually discuss the topic asked about? Ignore articles that merely share a keyword but are about something else.
+
+Return ONLY the article numbers of the top {top_n}, one per line, most relevant first.
+Example:
+3
+7
+1
+5
+2
+
+Articles:
+{articles_text}"""
+
+    try:
+        resp = _get_client().models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                temperature=0.0,
+                max_output_tokens=256,
+            ),
+        )
+        text = resp.text or ""
+        picked = []
+        for line in text.strip().split("\n"):
+            nums = re.findall(r'\d+', line)
+            if nums:
+                idx = int(nums[0]) - 1
+                if 0 <= idx < len(candidates) and idx not in [p for p, _ in picked]:
+                    picked.append((idx, candidates[idx]))
+            if len(picked) >= top_n:
+                break
+        if picked:
+            return [c for _, c in picked]
+    except Exception:
+        pass
+
+    # Fallback: return first top_n candidates (search engine order)
+    return candidates[:top_n]
 
 
 def search_and_summarize(query: str) -> dict:
@@ -103,11 +135,11 @@ def search_and_summarize(query: str) -> dict:
 
     # Phase 1: Combined search across all whitelisted domains
     search_results = search_whitelisted(query, WHITELISTED_DOMAINS, max_results=20)
-    candidates = _fetch_and_score(query, search_results, seen_urls)
+    candidates = _fetch_candidates(search_results, seen_urls)
 
     # Phase 2: Always search each domain individually for more candidates
     per_domain_results = search_per_domain(query, WHITELISTED_DOMAINS, results_per_domain=3)
-    extra = _fetch_and_score(query, per_domain_results, seen_urls)
+    extra = _fetch_candidates(per_domain_results, seen_urls)
     candidates.extend(extra)
 
     if not candidates:
@@ -117,9 +149,8 @@ def search_and_summarize(query: str) -> dict:
             "sources": [],
         }
 
-    # Keep top 5 most relevant articles (by score, include all candidates)
-    candidates.sort(key=lambda c: c["score"], reverse=True)
-    good = candidates[:5]
+    # Use Gemini to pick the most relevant articles
+    good = _rank_by_relevance(query, candidates)
 
     sources = []
     context_parts = []
