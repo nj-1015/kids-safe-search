@@ -80,7 +80,7 @@ def _rank_by_relevance(query: str, candidates: list[dict], top_n: int = 5) -> li
 
     article_list = []
     for i, c in enumerate(candidates):
-        preview = c["content"][:300].replace("\n", " ")
+        preview = c["content"][:800].replace("\n", " ")
         article_list.append(f"[{i+1}] {c['title']}\n{preview}")
     articles_text = "\n\n".join(article_list)
 
