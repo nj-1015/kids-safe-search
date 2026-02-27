@@ -4,6 +4,7 @@ from datetime import datetime
 
 import streamlit as st
 
+from config import load_whitelist
 from services.gemini_summarizer import search_and_summarize
 
 # --- Page config ---
@@ -496,17 +497,16 @@ with st.sidebar:
             st.rerun()
 
 # --- Header ---
-st.markdown("""
+_all_sites = load_whitelist()
+_badges_html = "\n".join(
+    f'        <span class="hero-badge">{s["name"]}</span>' for s in _all_sites
+)
+st.markdown(f"""
 <div class="hero">
     <div class="hero-title">KidSearch</div>
     <div class="hero-sub">Ask me anything — I only search safe sites!</div>
     <div class="hero-badges">
-        <span class="hero-badge">National Geographic Kids</span>
-        <span class="hero-badge">Wonderopolis</span>
-        <span class="hero-badge">TIME for Kids</span>
-        <span class="hero-badge">Ducksters</span>
-        <span class="hero-badge">Newsela</span>
-        <span class="hero-badge">+ 10 more</span>
+{_badges_html}
     </div>
 </div>
 """, unsafe_allow_html=True)

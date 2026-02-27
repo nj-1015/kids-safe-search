@@ -104,6 +104,30 @@
       "url": "https://teachingkidsnews.com",
       "category": "news",
       "description": "Readable, teachable news with reading levels"
+    },
+    {
+      "name": "CBC Kids News",
+      "domain": "cbc.ca",
+      "path_prefix": "/kidsnews/",
+      "url": "https://www.cbc.ca/kidsnews",
+      "category": "news",
+      "description": "Canadian kids news covering current events age-appropriately"
+    },
+    {
+      "name": "BBC Newsround",
+      "domain": "bbc.co.uk",
+      "path_prefix": "/newsround",
+      "url": "https://www.bbc.co.uk/newsround",
+      "category": "news",
+      "description": "BBC's kid-friendly news covering world events age-appropriately"
+    },
+    {
+      "name": "PBS NewsHour",
+      "domain": "pbs.org",
+      "path_prefix": "/newshour",
+      "url": "https://www.pbs.org/newshour",
+      "category": "news",
+      "description": "Factual public broadcasting news with classroom resources"
     }
   ]
 }

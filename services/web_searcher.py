@@ -3,11 +3,25 @@ from urllib.parse import urlparse
 
 from ddgs import DDGS
 
+from config import load_whitelist
+
+# Build a lookup for domains that require path prefix checking
+_SITES = load_whitelist()
+_PATH_PREFIXES = {s["domain"]: s["path_prefix"] for s in _SITES if s.get("path_prefix")}
+
 
 def _is_whitelisted(url: str, domains: list[str]) -> bool:
-    """Check if a URL belongs to one of the whitelisted domains."""
-    netloc = urlparse(url).netloc.lower()
-    return any(netloc == d or netloc.endswith("." + d) for d in domains)
+    """Check if a URL belongs to one of the whitelisted domains (with optional path prefix)."""
+    parsed = urlparse(url)
+    netloc = parsed.netloc.lower()
+    for d in domains:
+        if netloc == d or netloc.endswith("." + d):
+            # If this domain has a path_prefix requirement, check the path too
+            prefix = _PATH_PREFIXES.get(d)
+            if prefix and not parsed.path.lower().startswith(prefix):
+                return False
+            return True
+    return False
 
 
 def search_whitelisted(query: str, domains: list[str], max_results: int = 20) -> list[dict]:

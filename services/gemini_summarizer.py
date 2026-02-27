@@ -34,15 +34,27 @@ Rules:
 - You MUST cite EVERY source provided. Each source has useful information — find something relevant from each one and cite it
 - Do NOT skip any source unless it is about a completely different topic with zero relevance
 - Stay focused on exactly what the user asked. Do NOT go on tangents about unrelated topics
+- If the question asks about a specific year but the sources are from different years, still share what the sources say — explain the topic using the available sources and note which years the information comes from
 - If the sources don't have enough information to answer the question, say so honestly\
 """
 
 
 def _relevance_score(query: str, title: str, content: str) -> int:
     """Score how relevant an article is to the query based on keyword overlap."""
-    query_words = set(re.findall(r'[a-z]{3,}', query.lower()))
+    # Include numbers (e.g. "2025") alongside words for scoring
+    query_words = set(re.findall(r'[a-z0-9]{3,}', query.lower()))
     text = f"{title} {content}".lower()
-    return sum(1 for w in query_words if w in text)
+    matched = {w for w in query_words if w in text}
+    score = len(matched)
+
+    # Bonus: if query contains a 4-digit year AND article matches the year
+    # AND at least one non-year keyword also matches (to avoid boosting generic "2025" pages)
+    years = set(re.findall(r'\b(20\d{2})\b', query))
+    non_year_matches = matched - years
+    for year in years:
+        if year in text and non_year_matches:
+            score += 3
+    return score
 
 
 MIN_GOOD_CANDIDATES = 5
