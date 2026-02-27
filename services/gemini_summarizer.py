@@ -88,15 +88,9 @@ def _rank_by_relevance(query: str, candidates: list[dict], top_n: int = 5) -> li
 User's question: "{query}"
 
 Below are {len(candidates)} articles. Pick the {top_n} MOST relevant to the user's question.
-Consider: Does the article actually discuss the topic asked about? Ignore articles that merely share a keyword but are about something else.
-
-Return ONLY the article numbers of the top {top_n}, one per line, most relevant first.
-Example:
-3
-7
-1
-5
-2
+Rank by how closely each article relates to the question topic.
+You MUST always return exactly {top_n} numbers, even if some articles are only loosely related.
+Do NOT explain or add any text — output ONLY {top_n} numbers, one per line.
 
 Articles:
 {articles_text}"""
