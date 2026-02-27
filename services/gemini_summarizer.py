@@ -87,17 +87,21 @@ def _rank_by_relevance(query: str, candidates: list[dict], top_n: int = 5) -> li
     prompt = f"""\
 User's question: "{query}"
 
-Below are {len(candidates)} articles. Pick the {top_n} MOST relevant to the user's question.
-Rank by how closely each article relates to the question topic.
-You MUST always return exactly {top_n} numbers, even if some articles are only loosely related.
-Do NOT explain or add any text — output ONLY {top_n} numbers, one per line.
+Below are {len(candidates)} articles. Select up to {top_n} articles that actually discuss the topic the user is asking about.
+
+IMPORTANT:
+- Only select articles that are genuinely about the topic, not ones that merely share a word
+- For example, "shooting hoops" (basketball) is NOT relevant to "school shooting"
+- Return between 1 and {top_n} numbers, one per line, most relevant first
+- Do NOT include irrelevant filler articles just to reach {top_n}
+- Output ONLY numbers, no text
 
 Articles:
 {articles_text}"""
 
     try:
         resp = _get_client().models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.1-pro-preview",
             contents=prompt,
             config=genai.types.GenerateContentConfig(
                 temperature=0.0,
